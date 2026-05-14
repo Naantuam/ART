@@ -1,0 +1,52 @@
+{
+  "name": "star",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
+    "@material-tailwind/react": "^2.1.10",
+    "@tailwindcss/vite": "^4.1.11",
+    "apexcharts": "^4.7.0",
+    "axios": "^1.12.2",
+    "bootstrap": "^5.3.6",
+    "bootstrap-icons": "^1.13.1",
+    "framer-motion": "^12.23.12",
+    "heroicons": "^2.2.0",
+    "i18next": "^25.2.1",
+    "i18next-browser-languagedetector": "^8.1.0",
+    "i18next-http-backend": "^3.0.2",
+    "lucide-react": "^0.542.0",
+    "react": "^19.1.0",
+    "react-apexcharts": "^1.7.0",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^15.5.2",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.6.2",
+    "recharts": "^3.1.2",
+    "styled-components": "^6.1.18",
+    "swiper": "^11.2.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "vite": "^6.3.5"
+  }
+}
