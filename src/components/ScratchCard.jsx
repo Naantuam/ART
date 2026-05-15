@@ -11,10 +11,10 @@ const DAY_COLORS = {
 
 const SCRATCH_THRESHOLD = 0.50; // 50% revealed triggers auto-complete
 
-const ScratchCard = ({ artistImage = null, artistName = 'Artist One', onReveal, onArtistClick, dayOverride }) => {
+const ScratchCard = ({ artistImage = null, artistName = 'Artist One', onReveal, onArtistClick, dayOverride, isScratchable = true, autoReveal = false }) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
-  const [isRevealed, setIsRevealed] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(autoReveal);
   const [percentage, setPercentage] = useState(0);
   const { currentDay } = useStateContext();
 
@@ -81,7 +81,7 @@ const ScratchCard = ({ artistImage = null, artistName = 'Artist One', onReveal, 
   };
 
   const scratch = (e) => {
-    if (!isDrawing.current || isRevealed) return;
+    if (!isDrawing.current || isRevealed || !isScratchable) return;
     e.preventDefault();
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
