@@ -144,15 +144,15 @@ const ScratchCard = ({ artistImage = null, artistName = 'Artist One', onReveal, 
             />
           ) : (
             // Placeholder when no image is provided yet
-            <div className="flex flex-col items-center justify-center gap-4 w-full h-full"
-              style={{ background: 'radial-gradient(ellipse at center, #2a1a2a 0%, #0d0d0d 70%)' }}>
+            <div className="flex flex-col items-center justify-center gap-4 w-full h-full text-center px-4"
+              style={{ background: 'radial-gradient(ellipse at center, #231223 0%, #0a0a0a 80%)' }}>
               <div
                 className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 flex items-center justify-center text-4xl"
                 style={{ borderColor: dayColor.hex, boxShadow: `0 0 20px ${dayColor.glow}` }}
               >
                 🎨
               </div>
-              <p className="text-white/30 text-sm tracking-widest uppercase">Loading...</p>
+              <p className="text-white/40 text-xs tracking-widest uppercase font-bold">Awaiting Canvas Upload</p>
             </div>
           )}
         </div>

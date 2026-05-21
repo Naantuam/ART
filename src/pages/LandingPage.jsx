@@ -104,16 +104,18 @@ const LandingPage = () => {
   const tickRef = useRef(null);
 
   const [artists, setArtists] = useState(ARTIST_DATA);
+  const [isTimerActiveByAdmin, setIsTimerActiveByAdmin] = useState(true);
 
-  // Fetch active artworks from backend to dynamically set scratch card background
+  // Fetch active artworks and timer settings from backend
   useEffect(() => {
-    const fetchActiveArtworks = async () => {
+    const fetchActiveArtworksAndSettings = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/upload`);
-        if (res.data && Array.isArray(res.data)) {
+        // Fetch active artworks
+        const artRes = await axios.get(`${API_BASE_URL}/api/upload`);
+        if (artRes.data && Array.isArray(artRes.data)) {
           setArtists(prev => {
             const updated = { ...prev };
-            res.data.forEach(artwork => {
+            artRes.data.forEach(artwork => {
               const dayKey = artwork.artist_id.charAt(0).toUpperCase() + artwork.artist_id.slice(1).toLowerCase();
               if (updated[dayKey]) {
                 updated[dayKey] = {
@@ -129,8 +131,18 @@ const LandingPage = () => {
       } catch (err) {
         console.error('Failed to fetch active artworks:', err);
       }
+
+      try {
+        // Fetch timer settings
+        const settingsRes = await axios.get(`${API_BASE_URL}/api/settings`);
+        if (settingsRes.data && typeof settingsRes.data.timerActive === 'boolean') {
+          setIsTimerActiveByAdmin(settingsRes.data.timerActive);
+        }
+      } catch (err) {
+        console.error('Failed to fetch timer settings:', err);
+      }
     };
-    fetchActiveArtworks();
+    fetchActiveArtworksAndSettings();
   }, []);
 
   // Tick every second
@@ -141,7 +153,7 @@ const LandingPage = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
-  const countdownActive = timeLeft !== null; // Dynamically active until countdown target is reached
+  const countdownActive = isTimerActiveByAdmin && timeLeft !== null; // Dynamically active if enabled by admin and target not reached
 
   // Neon pink to match logo / ScratchCard Wed colour
   const NEON = '#FF007F';
@@ -162,10 +174,6 @@ const LandingPage = () => {
           />
         </div>
 
-        {/* ── Heading ── */}
-        <h2 className="text-xl md:text-3xl font-bold tracking-widest text-center uppercase text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] mb-6 px-4">
-          Guess who our first artist is?
-        </h2>
 
         {/* ── Cards (blurred when countdown is active) ── */}
         <div
@@ -193,7 +201,7 @@ const LandingPage = () => {
             >
               {days.map((day) => {
                 const isSaturday = currentDay === 'Sat';
-                const canScratch  = !countdownActive && currentDay === day;
+                const canScratch  = !countdownActive && currentDay === day && !!artists[day]?.uploaded;
 
                 return (
                   <SwiperSlide key={day} className="transition-opacity duration-300 flex justify-center">
@@ -203,7 +211,7 @@ const LandingPage = () => {
                           <ScratchCard
                             dayOverride={day}
                             artistName={artists[day].name}
-                            artistImage={artists[day].image}
+                            artistImage={artists[day].uploaded ? artists[day].image : null}
                             isScratchable={canScratch}
                             autoReveal={isSaturday}
                             onArtistClick={() => navigate(`/artist/${day.toLowerCase()}`)}

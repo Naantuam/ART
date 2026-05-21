@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [message, setMessage] = useState('');
   const [uploadingSlots, setUploadingSlots] = useState({ wed: false, thu: false, fri: false });
+  const [timerActive, setTimerActive] = useState(true);
 
   // Custom metadata fields for uploads
   const [customTitles, setCustomTitles] = useState({ wed: '', thu: '', fri: '' });
@@ -31,12 +32,39 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchTimerSetting = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/settings`);
+      if (res.data && typeof res.data.timerActive === 'boolean') {
+        setTimerActive(res.data.timerActive);
+      }
+    } catch (err) {
+      console.error('Failed to load timer settings', err);
+    }
+  };
+
   useEffect(() => {
     fetchSummaryData();
+    fetchTimerSetting();
     // Auto-refresh summary data every 5 seconds for real-time monitoring
-    const interval = setInterval(fetchSummaryData, 5000);
+    const interval = setInterval(() => {
+      fetchSummaryData();
+      fetchTimerSetting();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleToggleTimer = async () => {
+    try {
+      const targetState = !timerActive;
+      setMessage(`Toggling countdown timer to ${targetState ? 'ACTIVE' : 'BYPASSED'}...`);
+      await axios.post(`${API_BASE_URL}/api/settings`, { timerActive: targetState });
+      setTimerActive(targetState);
+      setMessage(`SUCCESS! Countdown timer is now ${targetState ? 'ACTIVE' : 'BYPASSED'}.`);
+    } catch (err) {
+      setMessage('Failed to toggle timer: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   // Upload Canvas Flow
   const handleUpload = async (dayString, file) => {
@@ -141,7 +169,17 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right">
+            <button
+              onClick={handleToggleTimer}
+              className={`px-4 py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs border transition-all active:scale-95 cursor-pointer ${
+                timerActive 
+                  ? 'bg-neutral-900 border-yellow-500/30 text-yellow-400 hover:bg-yellow-950/20 shadow-[0_0_15px_rgba(234,179,8,0.15)]' 
+                  : 'bg-green-950/40 border-green-700/50 text-green-400 hover:bg-green-900/40 shadow-[0_0_15px_rgba(34,197,94,0.15)]'
+              }`}
+            >
+              {timerActive ? '⏳ Timer: ON (Locked)' : '🔓 Timer: OFF (Bypassed)'}
+            </button>
+            <div className="text-right hidden sm:block">
               <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Event Console</p>
               <p className="text-[10px] text-green-400 font-mono tracking-wider font-semibold">Subdomain Managed Access</p>
             </div>

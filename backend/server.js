@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import auctionRoutes from './routes/auctionRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auctions', auctionRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
