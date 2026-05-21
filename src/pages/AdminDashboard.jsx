@@ -106,6 +106,22 @@ const AdminDashboard = () => {
     }
   };
 
+  // Delete Artwork & Reset Slot Flow
+  const handleDeleteArtwork = async (dayKey) => {
+    if (!window.confirm(`Are you absolutely sure you want to delete the artwork and reset the ${dayKey.toUpperCase()} slot? This will permanently delete the database records, all placed bids, and the image from Supabase Storage!`)) {
+      return;
+    }
+
+    try {
+      setMessage(`Deleting ${dayKey.toUpperCase()} artwork...`);
+      await axios.delete(`${API_BASE_URL}/api/upload/${dayKey}`);
+      setMessage(`SUCCESS! ${dayKey.toUpperCase()} artwork deleted and slot reset.`);
+      fetchSummaryData();
+    } catch (err) {
+      setMessage('Deletion failed: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   // Format Helper
   const formatNaira = (num) => `₦${Number(num).toLocaleString()}`;
 
@@ -305,6 +321,13 @@ const AdminDashboard = () => {
                                 className="col-span-2 border border-neutral-800 text-neutral-500 hover:text-red-400 hover:border-red-950 py-2 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all text-center cursor-pointer"
                               >
                                 ♻️ Clear & Reset Bids
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteArtwork(dayKey)}
+                                className="col-span-2 mt-4 border border-dashed border-red-900/40 text-red-500 hover:bg-red-950/20 py-2 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all text-center cursor-pointer"
+                              >
+                                🗑️ Delete Artwork & Reset Slot
                               </button>
                             </div>
 

@@ -74,4 +74,64 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
+// Admin: Delete uploaded artwork, associated auctions, bids, and storage image by artistId
+router.delete('/:artistId', async (req, res) => {
+  const { artistId } = req.params;
+  try {
+    // 1. Fetch the artwork details to get DB id and storage image URL
+    const { data: artwork, error: fetchError } = await supabase
+      .from('artworks')
+      .select('id, image_url')
+      .eq('artist_id', artistId.toLowerCase())
+      .limit(1);
+
+    if (fetchError || !artwork || artwork.length === 0) {
+      return res.status(404).json({ message: 'No artwork found for this artist' });
+    }
+
+    const artworkId = artwork[0].id;
+    const imageUrl = artwork[0].image_url;
+
+    // 2. Fetch the auction associated with this artwork
+    const { data: auction } = await supabase
+      .from('auctions')
+      .select('id')
+      .eq('artwork_id', artworkId)
+      .limit(1);
+
+    if (auction && auction.length > 0) {
+      const auctionId = auction[0].id;
+      // Delete any placed bids first
+      await supabase.from('bids').delete().eq('auction_id', auctionId);
+      // Delete the auction
+      await supabase.from('auctions').delete().eq('id', auctionId);
+    }
+
+    // 3. Delete the artwork record from DB
+    const { error: dbDeleteError } = await supabase
+      .from('artworks')
+      .delete()
+      .eq('id', artworkId);
+
+    if (dbDeleteError) throw dbDeleteError;
+
+    // 4. Delete the image file from Supabase Storage bucket
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    
+    const { error: storageDeleteError } = await supabase.storage
+      .from('artworks')
+      .remove([fileName]);
+
+    if (storageDeleteError) {
+      console.warn('Storage deletion warning (file may have been deleted manually):', storageDeleteError.message);
+    }
+
+    res.json({ success: true, message: `Successfully deleted artwork and reset ${artistId.toUpperCase()} slot.` });
+  } catch (error) {
+    console.error('Delete artwork failed:', error);
+    res.status(500).json({ message: 'Delete failed', error: error.message });
+  }
+});
+
 export default router;
