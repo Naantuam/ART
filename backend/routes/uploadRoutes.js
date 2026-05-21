@@ -5,6 +5,21 @@ import { supabase } from '../config/supabaseClient.js';
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Public: Get all active uploaded artworks for the landing page
+router.get('/', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('artworks')
+      .select('*')
+      .eq('is_live_uploaded', true);
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to retrieve active artworks', error: error.message });
+  }
+});
+
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { artistId, title } = req.body;
@@ -51,6 +66,10 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     res.status(201).json({ message: 'Upload successful', artwork: artworkData[0] });
   } catch (error) {
+    console.error('DEBUG: Upload failed with error:', error);
+    if (error.cause) {
+      console.error('DEBUG: Underlying cause of fetch failure:', error.cause);
+    }
     res.status(500).json({ message: 'Upload failed', error: error.message });
   }
 });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 // Hardcoded artist data based on the day
 const ARTIST_DATA = {
@@ -29,13 +30,14 @@ const ArtistProfile = () => {
   const [auction, setAuction] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bidAmount, setBidAmount] = useState('');
+  const [bidderName, setBidderName] = useState('');
   const [bidMessage, setBidMessage] = useState('');
 
   const artistInfo = ARTIST_DATA[day?.toLowerCase()] || ARTIST_DATA.wed;
 
   const fetchAuction = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/auctions/artist/${day}`);
+      const res = await axios.get(`${API_BASE_URL}/api/auctions/artist/${day}`);
       setAuction(res.data);
     } catch (error) {
       console.log("No active auction or error fetching");
@@ -55,8 +57,8 @@ const ArtistProfile = () => {
     if (!auction) return;
     
     try {
-      await axios.post(`http://localhost:5000/api/auctions/${auction.id}/bid`, {
-        bidderName: 'Anonymous Bidder', 
+      await axios.post(`${API_BASE_URL}/api/auctions/${auction.id}/bid`, {
+        bidderName: bidderName.trim() || 'Anonymous Bidder', 
         amount: Number(bidAmount)
       });
       setBidMessage('Bid placed successfully!');
@@ -146,45 +148,102 @@ const ArtistProfile = () => {
           {/* Auction Details Section */}
           {auction ? (
             <div className="bg-neutral-800/80 p-6 sm:p-8 rounded-2xl border border-neutral-700 shadow-xl">
-              <div className="flex justify-between items-end mb-8 border-b border-neutral-700/50 pb-6">
+              {auction.status === 'scheduled' ? (
+                // Scheduled/Upcoming state
                 <div>
-                  <p className="text-xs text-gray-400 mb-1 uppercase tracking-widest font-bold">Current Bid</p>
-                  <p className="text-4xl sm:text-5xl font-light text-white">${auction.current_bid.toLocaleString()}</p>
-                </div>
-                <div className="text-right">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                    <span className="text-xs text-green-400 font-bold tracking-widest">LIVE</span>
+                  <div className="flex justify-between items-end mb-6 border-b border-neutral-700/50 pb-6">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase tracking-widest font-bold">Starting Bid</p>
+                      <p className="text-4xl sm:text-5xl font-light text-white">₦{auction.starting_price.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full">
+                        <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                        <span className="text-xs text-yellow-400 font-bold tracking-widest uppercase">Upcoming</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center p-5 bg-neutral-900/60 rounded-xl border border-neutral-800/80">
+                    <p className="text-sm text-neutral-300 font-medium leading-relaxed">
+                      ✦ The public auction for this masterpiece will officially open this Saturday! Get ready to place your bids.
+                    </p>
                   </div>
                 </div>
-              </div>
+              ) : auction.status === 'ended' ? (
+                // Ended state
+                <div>
+                  <div className="flex justify-between items-end mb-6 border-b border-neutral-700/50 pb-6">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase tracking-widest font-bold">Winning Bid</p>
+                      <p className="text-4xl sm:text-5xl font-light text-white">₦{auction.current_bid.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-600/20 border border-neutral-600/30 rounded-full">
+                        <span className="text-xs text-neutral-400 font-bold tracking-widest">CLOSED</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-center p-5 bg-neutral-900/60 rounded-xl border border-neutral-800/80">
+                    <p className="text-sm text-neutral-400 font-medium leading-relaxed">
+                      🔒 The bidding has concluded for this artwork. Thank you to all participants!
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                // Live state
+                <div>
+                  <div className="flex justify-between items-end mb-8 border-b border-neutral-700/50 pb-6">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1 uppercase tracking-widest font-bold">Current Bid</p>
+                      <p className="text-4xl sm:text-5xl font-light text-white">₦{auction.current_bid.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        <span className="text-xs text-green-400 font-bold tracking-widest">LIVE</span>
+                      </div>
+                    </div>
+                  </div>
 
-              {bidMessage && (
-                <div className="mb-6 p-4 rounded-xl bg-neutral-900 text-blue-400 text-sm border border-neutral-700 font-medium text-center">
-                  {bidMessage}
+                  {bidMessage && (
+                    <div className="mb-6 p-4 rounded-xl bg-neutral-900 text-blue-400 text-sm border border-neutral-700 font-medium text-center">
+                      {bidMessage}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleBid} className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₦</span>
+                        <input 
+                          type="number" 
+                          min={auction.current_bid + 1}
+                          required
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-xl py-4 pl-8 pr-4 focus:ring-2 focus:ring-white focus:border-white transition-all text-lg font-medium text-white placeholder-gray-600 outline-none"
+                          placeholder={`Min. ${(auction.current_bid + 1).toLocaleString()}`}
+                          value={bidAmount}
+                          onChange={(e) => setBidAmount(e.target.value)}
+                        />
+                      </div>
+                      <div className="relative sm:w-48">
+                        <input 
+                          type="text" 
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-xl py-4 px-4 focus:ring-2 focus:ring-white focus:border-white transition-all text-lg font-medium text-white placeholder-gray-600 outline-none"
+                          placeholder="Your Name (Optional)"
+                          value={bidderName}
+                          onChange={(e) => setBidderName(e.target.value)}
+                        />
+                      </div>
+                      <button 
+                        type="submit"
+                        className="bg-white text-black px-8 py-4 rounded-xl font-bold hover:bg-gray-200 transition-transform active:scale-95 whitespace-nowrap text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                      >
+                        Place Bid
+                      </button>
+                    </div>
+                  </form>
                 </div>
               )}
-
-              <form onSubmit={handleBid} className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
-                  <input 
-                    type="number" 
-                    min={auction.current_bid + 1}
-                    required
-                    className="w-full bg-neutral-900 border border-neutral-700 rounded-xl py-4 pl-8 pr-4 focus:ring-2 focus:ring-white focus:border-white transition-all text-lg font-medium text-white placeholder-gray-600 outline-none"
-                    placeholder={`Min. ${(auction.current_bid + 1).toLocaleString()}`}
-                    value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  className="bg-white text-black px-8 py-4 rounded-xl font-bold hover:bg-gray-200 transition-transform active:scale-95 whitespace-nowrap text-lg shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                >
-                  Place Bid
-                </button>
-              </form>
             </div>
           ) : (
             <div className="bg-neutral-800/30 border border-neutral-800 rounded-2xl p-8 text-center">

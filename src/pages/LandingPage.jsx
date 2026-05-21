@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import ScratchCard from '../components/ScratchCard';
 import { useStateContext } from '../context/StateContext';
+import { API_BASE_URL } from '../config';
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -101,6 +103,36 @@ const LandingPage = () => {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft);
   const tickRef = useRef(null);
 
+  const [artists, setArtists] = useState(ARTIST_DATA);
+
+  // Fetch active artworks from backend to dynamically set scratch card background
+  useEffect(() => {
+    const fetchActiveArtworks = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/upload`);
+        if (res.data && Array.isArray(res.data)) {
+          setArtists(prev => {
+            const updated = { ...prev };
+            res.data.forEach(artwork => {
+              const dayKey = artwork.artist_id.charAt(0).toUpperCase() + artwork.artist_id.slice(1).toLowerCase();
+              if (updated[dayKey]) {
+                updated[dayKey] = {
+                  ...updated[dayKey],
+                  image: artwork.image_url,
+                  uploaded: true
+                };
+              }
+            });
+            return updated;
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch active artworks:', err);
+      }
+    };
+    fetchActiveArtworks();
+  }, []);
+
   // Tick every second
   useEffect(() => {
     tickRef.current = setInterval(() => {
@@ -109,7 +141,7 @@ const LandingPage = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
-  const countdownActive = timeLeft !== null;
+  const countdownActive = timeLeft !== null; // Dynamically active until countdown target is reached
 
   // Neon pink to match logo / ScratchCard Wed colour
   const NEON = '#FF007F';
@@ -170,8 +202,8 @@ const LandingPage = () => {
                         <div className="h-[45dvh] max-h-[500px] min-h-[300px] aspect-[3/4]">
                           <ScratchCard
                             dayOverride={day}
-                            artistName={ARTIST_DATA[day].name}
-                            artistImage={ARTIST_DATA[day].image}
+                            artistName={artists[day].name}
+                            artistImage={artists[day].image}
                             isScratchable={canScratch}
                             autoReveal={isSaturday}
                             onArtistClick={() => navigate(`/artist/${day.toLowerCase()}`)}
