@@ -106,7 +106,7 @@ const LandingPage = () => {
   const [artists, setArtists] = useState(ARTIST_DATA);
   const [isTimerActiveByAdmin, setIsTimerActiveByAdmin] = useState(true);
 
-  // Fetch active artworks and timer settings from backend
+  // Fetch active artworks and timer settings from backend (with 5-second polling)
   useEffect(() => {
     const fetchActiveArtworksAndSettings = async () => {
       try {
@@ -115,6 +115,15 @@ const LandingPage = () => {
         if (artRes.data && Array.isArray(artRes.data)) {
           setArtists(prev => {
             const updated = { ...prev };
+            // Reset all uploaded statuses and fallback to defaults in case a slot was deleted
+            Object.keys(updated).forEach(dayKey => {
+              updated[dayKey] = {
+                ...updated[dayKey],
+                image: ARTIST_DATA[dayKey].image,
+                uploaded: false
+              };
+            });
+            // Then apply uploaded artworks
             artRes.data.forEach(artwork => {
               const dayKey = artwork.artist_id.charAt(0).toUpperCase() + artwork.artist_id.slice(1).toLowerCase();
               if (updated[dayKey]) {
@@ -143,6 +152,8 @@ const LandingPage = () => {
       }
     };
     fetchActiveArtworksAndSettings();
+    const interval = setInterval(fetchActiveArtworksAndSettings, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Tick every second
@@ -201,7 +212,10 @@ const LandingPage = () => {
             >
               {days.map((day) => {
                 const isSaturday = currentDay === 'Sat';
-                const canScratch  = !countdownActive && currentDay === day && !!artists[day]?.uploaded;
+                const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const realDay = weekdays[new Date().getDay()];
+                const isCardDay = (day === realDay);
+                const canScratch  = !countdownActive && currentDay === day && isCardDay;
 
                 return (
                   <SwiperSlide key={day} className="transition-opacity duration-300 flex justify-center">
@@ -211,7 +225,7 @@ const LandingPage = () => {
                           <ScratchCard
                             dayOverride={day}
                             artistName={artists[day].name}
-                            artistImage={artists[day].uploaded ? artists[day].image : null}
+                            artistImage={artists[day].image}
                             isScratchable={canScratch}
                             autoReveal={isSaturday}
                             onArtistClick={() => navigate(`/artist/${day.toLowerCase()}`)}
