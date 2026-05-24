@@ -228,7 +228,7 @@ const AdminDashboard = () => {
                   <div className="p-6 border-b border-neutral-900 bg-neutral-900/30 flex justify-between items-center">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: themeColor }}>
-                        {dayKey.toUpperCase()}DAY EXHIBIT
+                        {dayKey === 'wed' ? 'WEDNESDAY' : dayKey === 'thu' ? 'THURSDAY' : 'FRIDAY'} EXHIBIT
                       </span>
                       <h2 className="text-xl font-bold uppercase text-white tracking-wide mt-1">
                         {dayConfig.artist.split(' ')[0]}
